@@ -3,9 +3,12 @@
 <package format="3">
   <name>reduct_camera</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="anthony@todo.todo">anthony</maintainer>
+  <description>Simple setup for using ROS 2 with ReductStoren to store camera images</description>
+  <maintainer email="info@reduct.store">anthony</maintainer>
   <license>MIT</license>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

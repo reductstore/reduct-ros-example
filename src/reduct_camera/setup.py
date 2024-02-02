@@ -14,8 +14,8 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='anthony',
-    maintainer_email='anthony@todo.todo',
-    description='TODO: Package description',
+    maintainer_email='info@reduct.store',
+    description='Simple setup for using ROS 2 with ReductStoren to store camera images',
     license='MIT',
     tests_require=['pytest'],
     entry_points={
