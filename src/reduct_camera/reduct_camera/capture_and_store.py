@@ -32,7 +32,7 @@ class ImageListener(Node):
         """Asynchronously initialize the Reduct bucket for storing images."""
         self.get_logger().info("Initializing Reduct bucket")
         self.bucket = await self.reduct_client.create_bucket(
-            "image-bucket",
+            "ros-bucket",
             BucketSettings(quota_type=QuotaType.FIFO, quota_size=1_000_000_000),
             exist_ok=True,
         )
@@ -82,7 +82,7 @@ class ImageListener(Node):
             await self.init_bucket()
         readable_timestamp = self.format_timestamp(timestamp)
         self.get_logger().info(f"Storing data at {readable_timestamp}")
-        await self.bucket.write("ros-data", data, timestamp)
+        await self.bucket.write("image-raw", data, timestamp)
 
 
 def main() -> None:
