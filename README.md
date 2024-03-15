@@ -53,7 +53,7 @@ ros2 run reduct_camera capture_and_store
 Launch the webcam:
 
 ```bash
-ros2 run usb_cam usb_cam_node_exe
+ros2 run usb_cam usb_cam_node_exe --ros-args --params-file ./usb_cam_config.yaml
 ```
 
 ## Ressources

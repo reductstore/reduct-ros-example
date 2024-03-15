@@ -4,7 +4,6 @@ from datetime import datetime
 
 import rclpy
 from rclpy.node import Node
-from rclpy.serialization import serialize_message
 from sensor_msgs.msg import Image
 
 from reduct import Bucket, BucketSettings, Client, QuotaType
@@ -27,6 +26,8 @@ class ImageListener(Node):
         self.subscription = self.create_subscription(
             Image, "/image_raw", self.image_callback, 10
         )
+        self.get_logger().info("Image listener node initialized")
+
 
     async def init_bucket(self) -> None:
         """Asynchronously initialize the Reduct bucket for storing images."""
@@ -38,17 +39,7 @@ class ImageListener(Node):
         )
 
     @staticmethod
-    def get_timestamp(msg: Image) -> int:
-        """
-        Extract the timestamp from a ROS message.
-
-        :param msg: The ROS message.
-        :return: The timestamp in microseconds.
-        """
-        return int(msg.header.stamp.sec * 1e6 + msg.header.stamp.nanosec / 1e3)
-
-    @staticmethod
-    def format_timestamp(timestamp: int) -> str:
+    def display_timestamp(timestamp: int) -> str:
         """
         Format a timestamp for human-readable display.
 
@@ -57,6 +48,26 @@ class ImageListener(Node):
         """
         return datetime.fromtimestamp(timestamp / 1e6).isoformat()
 
+    @staticmethod
+    def get_timestamp(msg: Image) -> int:
+        """
+        Extract the timestamp from a ROS message.
+
+        :param msg: The ROS message.
+        :return: The timestamp in microseconds.
+        """
+        return int(msg.header.stamp.sec * 1e6 + msg.header.stamp.nanosec / 1e3)
+    
+    @staticmethod
+    def serialize_message(msg: Image) -> bytes:
+        """
+        Serialize a ROS message to bytes.
+
+        :param msg: The ROS message.
+        :return: The serialized message.
+        """
+        return bytes(msg.data)
+
     def image_callback(self, msg: Image) -> None:
         """
         Handle incoming image messages by scheduling storage.
@@ -64,12 +75,10 @@ class ImageListener(Node):
         This callback is triggered by ROS message processing. It schedules
         the image storage coroutine to be executed in the asyncio event loop.
         """
-        self.get_logger().info("Received an image")
+        self.get_logger().info(f'Received image, storing to database')
         timestamp = self.get_timestamp(msg)
-        image_data = serialize_message(msg)
-        asyncio.run_coroutine_threadsafe(
-            self.store_data(timestamp, image_data), self.loop
-        )
+        binary_data = self.serialize_message(msg)
+        asyncio.run_coroutine_threadsafe(self.store_data(timestamp, binary_data), self.loop)
 
     async def store_data(self, timestamp: int, data: bytes) -> None:
         """
@@ -80,9 +89,9 @@ class ImageListener(Node):
         """
         if not self.bucket:
             await self.init_bucket()
-        readable_timestamp = self.format_timestamp(timestamp)
-        self.get_logger().info(f"Storing data at {readable_timestamp}")
-        await self.bucket.write("image-raw", data, timestamp)
+
+        self.get_logger().info(f"Storing data at {self.display_timestamp(timestamp)}")
+        await self.bucket.write("image", data, timestamp)
 
 
 def main() -> None:
