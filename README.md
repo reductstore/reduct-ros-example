@@ -1,5 +1,5 @@
 # reduct-ros-example
-This application demonstrates a simple setup for using ROS with ReductStore.
+This application demonstrates a simple setup for using ROS 2 with ReductStore.
 
 ## Python environment
 
