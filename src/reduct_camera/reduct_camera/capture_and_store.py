@@ -4,7 +4,7 @@ from datetime import datetime
 
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import CompressedImage
 
 from reduct import Bucket, BucketSettings, Client, QuotaType
 
@@ -24,7 +24,7 @@ class ImageListener(Node):
         self.loop: asyncio.AbstractEventLoop = loop
         self.bucket: Bucket = None
         self.subscription = self.create_subscription(
-            Image, "/image_raw", self.image_callback, 10
+            CompressedImage, "/image_raw/compressed", self.image_callback, 10
         )
         self.get_logger().info("Image listener node initialized")
 
@@ -33,7 +33,7 @@ class ImageListener(Node):
         """Asynchronously initialize the Reduct bucket for storing images."""
         self.get_logger().info("Initializing Reduct bucket")
         self.bucket = await self.reduct_client.create_bucket(
-            "ros-bucket",
+            "ros2_images",
             BucketSettings(quota_type=QuotaType.FIFO, quota_size=1_000_000_000),
             exist_ok=True,
         )
@@ -49,7 +49,7 @@ class ImageListener(Node):
         return datetime.fromtimestamp(timestamp / 1e6).isoformat()
 
     @staticmethod
-    def get_timestamp(msg: Image) -> int:
+    def get_timestamp(msg: CompressedImage) -> int:
         """
         Extract the timestamp from a ROS message.
 
@@ -59,7 +59,7 @@ class ImageListener(Node):
         return int(msg.header.stamp.sec * 1e6 + msg.header.stamp.nanosec / 1e3)
     
     @staticmethod
-    def serialize_message(msg: Image) -> bytes:
+    def serialize_message(msg: CompressedImage) -> bytes:
         """
         Serialize a ROS message to bytes.
 
@@ -68,7 +68,7 @@ class ImageListener(Node):
         """
         return bytes(msg.data)
 
-    def image_callback(self, msg: Image) -> None:
+    def image_callback(self, msg: CompressedImage) -> None:
         """
         Handle incoming image messages by scheduling storage.
 
@@ -78,9 +78,9 @@ class ImageListener(Node):
         self.get_logger().info(f'Received image, storing to database')
         timestamp = self.get_timestamp(msg)
         binary_data = self.serialize_message(msg)
-        asyncio.run_coroutine_threadsafe(self.store_data(timestamp, binary_data), self.loop)
+        asyncio.run_coroutine_threadsafe(self.store_data(timestamp, binary_data, "image/jpeg"), self.loop)
 
-    async def store_data(self, timestamp: int, data: bytes) -> None:
+    async def store_data(self, timestamp: int, data: bytes, content_type: str) -> None:
         """
         Store unstructured data in the Reduct bucket.
 
@@ -91,7 +91,7 @@ class ImageListener(Node):
             await self.init_bucket()
 
         self.get_logger().info(f"Storing data at {self.display_timestamp(timestamp)}")
-        await self.bucket.write("image", data, timestamp)
+        await self.bucket.write("images", data, timestamp, content_type=content_type)
 
 
 def main() -> None:

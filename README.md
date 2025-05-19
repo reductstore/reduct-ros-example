@@ -53,7 +53,16 @@ ros2 run reduct_camera capture_and_store
 Launch the webcam:
 
 ```bash
-ros2 run usb_cam usb_cam_node_exe --ros-args --params-file ./usb_cam_config.yaml
+ls /dev/video*
+# You should see /dev/video0 (and possibly /dev/video1, etc. if multiple video capture interfaces are connected)
+```
+
+Run the USB camera (e.g. /dev/video0 at 1280x720):
+
+```bash
+bash
+````
+ros2 run v4l2_camera v4l2_camera_node --ros-args -p image_size:="[1280,720]" -p video_device:="/dev/video0"
 ```
 
 ## Ressources
