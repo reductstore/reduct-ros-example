@@ -1,6 +1,7 @@
 import asyncio
 import threading
 from datetime import datetime
+import random
 
 import rclpy
 from rclpy.node import Node
@@ -27,7 +28,6 @@ class ImageListener(Node):
             CompressedImage, "/image_raw/compressed", self.image_callback, 10
         )
         self.get_logger().info("Image listener node initialized")
-
 
     async def init_bucket(self) -> None:
         """Asynchronously initialize the Reduct bucket for storing images."""
@@ -89,9 +89,11 @@ class ImageListener(Node):
         """
         if not self.bucket:
             await self.init_bucket()
+        
+        labels = {"random_value": random.uniform(0, 1)}
 
         self.get_logger().info(f"Storing data at {self.display_timestamp(timestamp)}")
-        await self.bucket.write("images", data, timestamp, content_type=content_type)
+        await self.bucket.write("images", data, timestamp, labels=labels, content_type=content_type)
 
 
 def main() -> None:
